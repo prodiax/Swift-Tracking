@@ -4,6 +4,7 @@ import Foundation
 public class NetworkTrackingPlugin {
     private weak var tracker: Tracker?
     private var isEnabled: Bool = false
+    private var config: TrackingConfig? { tracker?.configForPlugins() }
     
     public init(tracker: Tracker) {
         self.tracker = tracker
@@ -39,11 +40,11 @@ public class NetworkTrackingPlugin {
         
         // Parse URL components
         if let urlObj = URL(string: url) {
-            if let query = urlObj.query {
-                eventData[TrackingConstants.NETWORK_URL_QUERY_PROPERTY] = query
+            if config?.captureNetworkQueryParams == true, let query = urlObj.query {
+                eventData[TrackingConstants.NETWORK_URL_QUERY_PROPERTY] = Self.redactQuery(query)
             }
             if let fragment = urlObj.fragment {
-                eventData[TrackingConstants.NETWORK_URL_FRAGMENT_PROPERTY] = fragment
+                // fragments rarely contain sensitive data but exclude by default
             }
         }
         
@@ -71,20 +72,22 @@ public class NetworkTrackingPlugin {
             eventData[TrackingConstants.NETWORK_RESPONSE_BODY_SIZE_PROPERTY] = responseBodySize
         }
         
-        if let requestHeaders = requestHeaders {
-            eventData[TrackingConstants.NETWORK_REQUEST_HEADERS_PROPERTY] = requestHeaders
+        if config?.captureNetworkHeaders == true {
+            if let requestHeaders = requestHeaders {
+                eventData[TrackingConstants.NETWORK_REQUEST_HEADERS_PROPERTY] = Self.redactHeaders(requestHeaders)
+            }
+            if let responseHeaders = responseHeaders {
+                eventData[TrackingConstants.NETWORK_RESPONSE_HEADERS_PROPERTY] = Self.redactHeaders(responseHeaders)
+            }
         }
         
-        if let responseHeaders = responseHeaders {
-            eventData[TrackingConstants.NETWORK_RESPONSE_HEADERS_PROPERTY] = responseHeaders
-        }
-        
-        if let requestBody = requestBody {
-            eventData[TrackingConstants.NETWORK_REQUEST_BODY_PROPERTY] = requestBody
-        }
-        
-        if let responseBody = responseBody {
-            eventData[TrackingConstants.NETWORK_RESPONSE_BODY_PROPERTY] = responseBody
+        if config?.captureNetworkBodies == true {
+            if let requestBody = requestBody {
+                eventData[TrackingConstants.NETWORK_REQUEST_BODY_PROPERTY] = Self.redactBody(requestBody)
+            }
+            if let responseBody = responseBody {
+                eventData[TrackingConstants.NETWORK_RESPONSE_BODY_PROPERTY] = Self.redactBody(responseBody)
+            }
         }
         
         tracker?.track(eventType: TrackingConstants.NETWORK_REQUEST_EVENT, data: eventData)
@@ -134,5 +137,57 @@ public class NetworkTrackingPlugin {
             completionTime: completionTime,
             requestBodySize: requestBodySize
         )
+    }
+}
+
+// MARK: - Redaction
+
+extension NetworkTrackingPlugin {
+    private static let sensitiveHeaderKeys: Set<String> = [
+        "authorization", "proxy-authorization", "x-api-key", "api-key", "x-auth-token",
+        "cookie", "set-cookie"
+    ]
+    
+    private static func redactHeaders(_ headers: [String: String]) -> [String: String] {
+        var redacted: [String: String] = [:]
+        for (k, v) in headers {
+            if sensitiveHeaderKeys.contains(k.lowercased()) {
+                redacted[k] = "[REDACTED]"
+            } else {
+                redacted[k] = v
+            }
+        }
+        return redacted
+    }
+    
+    private static func redactQuery(_ query: String) -> String {
+        // Basic redaction for common sensitive params
+        let sensitiveParams = ["password", "pass", "pwd", "token", "secret", "apikey", "api_key", "auth"]
+        let pairs = query.split(separator: "&")
+        let mapped = pairs.map { pair -> String in
+            let parts = pair.split(separator: "=", maxSplits: 1).map(String.init)
+            guard parts.count == 2 else { return String(pair) }
+            let key = parts[0]
+            if sensitiveParams.contains(key.lowercased()) { return "\(key)=[REDACTED]" }
+            return String(pair)
+        }
+        return mapped.joined(separator: "&")
+    }
+    
+    private static func redactBody(_ body: String) -> String {
+        // Heuristic redaction: replace obvious secrets
+        var redacted = body
+        let patterns = [
+            "\\\"password\\\"\\s*:\\s*\\\"[^\\\"]*\\\"",
+            "\\\"token\\\"\\s*:\\s*\\\"[^\\\"]*\\\"",
+            "\\\"secret\\\"\\s*:\\s*\\\"[^\\\"]*\\\"",
+            "api[_-]?key\\s*[:=]\\s*\\\"[^\\\"]*\\\""
+        ]
+        for pattern in patterns {
+            if let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) {
+                redacted = regex.stringByReplacingMatches(in: redacted, options: [], range: NSRange(location: 0, length: redacted.utf16.count), withTemplate: "\"[REDACTED]\"")
+            }
+        }
+        return redacted
     }
 }

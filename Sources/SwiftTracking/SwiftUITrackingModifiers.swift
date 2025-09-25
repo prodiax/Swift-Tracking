@@ -12,7 +12,14 @@ public extension View {
     
     /// Automatically infer a screen name from the view type and track on appear
     func autoTrackScreen(data: [String: Any] = [:]) -> some View {
-        let inferred = String(describing: type(of: self))
+        // Attempt to infer a more readable name by stripping common wrappers
+        let raw = String(describing: type(of: self))
+        let inferred = raw
+            .replacingOccurrences(of: "NavigationStack<", with: "")
+            .replacingOccurrences(of: "NavigationView<", with: "")
+            .replacingOccurrences(of: "TabView<", with: "")
+            .replacingOccurrences(of: "Optional<", with: "")
+            .replacingOccurrences(of: ">", with: "")
         return self.onAppear {
             Tracker.shared.trackScreenView(inferred, data: data)
         }

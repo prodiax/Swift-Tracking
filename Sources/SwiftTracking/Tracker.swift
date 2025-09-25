@@ -31,6 +31,7 @@ public class Tracker: ObservableObject {
     private var networkTrackingPlugin: NetworkTrackingPlugin?
     private var frustrationInteractionTracker: FrustrationInteractionTracker?
     private var gestureTracker: GestureTracker?
+    private var lastTrackedScreenName: String?
     
     // MARK: - Initialization
     
@@ -62,6 +63,7 @@ public class Tracker: ObservableObject {
         
         // Initialize network tracking plugin
         self.networkTrackingPlugin = NetworkTrackingPlugin(tracker: self)
+        self.networkTrackingPlugin?.setEnabled(true)
         
         // Initialize frustration interaction tracker
         self.frustrationInteractionTracker = FrustrationInteractionTracker(tracker: self)
@@ -76,6 +78,7 @@ public class Tracker: ObservableObject {
             #endif
             // Enable SwiftUI gesture capture
             self.gestureTracker?.setEnabled(true)
+            self.frustrationInteractionTracker?.setEnabled(true)
         }
         
         // Check for app install/update events
@@ -131,7 +134,9 @@ public class Tracker: ObservableObject {
     /// Track screen view
     public func trackScreenView(_ screenName: String, data: [String: Any] = [:]) {
         // Update current screen name
+        if let last = lastTrackedScreenName, last == screenName { return }
         setCurrentScreenName(screenName)
+        lastTrackedScreenName = screenName
         
         var screenData = data
         screenData[TrackingConstants.APP_SCREEN_NAME_PROPERTY] = screenName
@@ -551,6 +556,9 @@ public class Tracker: ObservableObject {
     public func setUserId(_ userId: String?) {
         self.userId = userId
     }
+    
+    // Expose config to plugins in a read-only manner
+    internal func configForPlugins() -> TrackingConfig? { config }
     
     private func sendEvents(_ events: [TrackingEvent], config: TrackingConfig) {
         let payload = TrackingPayload(

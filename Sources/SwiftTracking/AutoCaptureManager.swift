@@ -17,6 +17,7 @@ final class AutoCaptureManager {
 
         UIViewController.enableTrackingSwizzle()
         UIApplication.enableSendActionSwizzle()
+        UIWindow.enableSendEventSwizzle()
     }
 
     // MARK: - Event Builders
@@ -44,6 +45,11 @@ final class AutoCaptureManager {
             }
         }
 
+        // Avoid capturing free-form text content
+        if control is UITextField || control is UITextView {
+            eventData.removeValue(forKey: TrackingConstants.APP_TARGET_TEXT_PROPERTY)
+        }
+
         if let label = control.accessibilityLabel, !label.isEmpty {
             eventData[TrackingConstants.APP_TARGET_AXLABEL_PROPERTY] = label
         }
@@ -55,7 +61,10 @@ final class AutoCaptureManager {
             eventData[TrackingConstants.APP_HIERARCHY_PROPERTY] = hierarchy
         }
 
-        Tracker.shared.track(eventType: TrackingConstants.ELEMENT_INTERACTED_EVENT, data: eventData)
+        let sanitized = DataSanitizer.sanitizeElementEventData(eventData)
+        Tracker.shared.track(eventType: TrackingConstants.ELEMENT_INTERACTED_EVENT, data: sanitized)
+        // A control produced a response, mark dead click as resolved
+        Tracker.shared.markClickResponse()
     }
 
     // MARK: - Helpers
@@ -133,6 +142,31 @@ private extension UIApplication {
             AutoCaptureManager.shared.handleControlAction(control: control, action: action, target: target)
         }
         return st_sendAction(action, to: target, from: sender, for: event)
+    }
+}
+
+// MARK: - UIWindow sendEvent Swizzle (tap interception for rage click detection)
+
+private extension UIWindow {
+    static func enableSendEventSwizzle() {
+        let originalSelector = #selector(UIWindow.sendEvent(_:))
+        let swizzledSelector = #selector(UIWindow.st_sendEvent(_:))
+
+        guard let originalMethod = class_getInstanceMethod(UIWindow.self, originalSelector),
+              let swizzledMethod = class_getInstanceMethod(UIWindow.self, swizzledSelector) else { return }
+
+        method_exchangeImplementations(originalMethod, swizzledMethod)
+    }
+
+    @objc func st_sendEvent(_ event: UIEvent) {
+        // Intercept touch end events to feed frustration tracker
+        if event.type == .touches, let touches = event.allTouches {
+            for touch in touches where touch.phase == .ended {
+                let point = touch.location(in: self)
+                Tracker.shared.trackClick(x: Double(point.x), y: Double(point.y))
+            }
+        }
+        st_sendEvent(event)
     }
 }
 

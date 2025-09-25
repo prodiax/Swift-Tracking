@@ -42,7 +42,8 @@ public class ElementInteractionTracker {
             eventData[TrackingConstants.APP_HIERARCHY_PROPERTY] = hierarchy
         }
         
-        tracker?.track(eventType: TrackingConstants.ELEMENT_INTERACTED_EVENT, data: eventData)
+        let sanitized = DataSanitizer.sanitizeElementEventData(eventData)
+        tracker?.track(eventType: TrackingConstants.ELEMENT_INTERACTED_EVENT, data: sanitized)
     }
     
     /// Track a button interaction
