@@ -10,6 +10,40 @@ public extension View {
         }
     }
     
+    /// Automatically track navigation titles and screen views
+    func trackNavigationTitle(_ title: String, data: [String: Any] = [:]) -> some View {
+        self.onAppear {
+            Tracker.shared.setCurrentNavigationTitle(title)
+            Tracker.shared.trackScreenView(title, data: data)
+        }
+        .onDisappear {
+            // Clear navigation title when view disappears
+            Tracker.shared.setCurrentNavigationTitle(nil)
+        }
+    }
+    
+    /// Automatically track screen views with navigation title detection
+    /// This modifier will attempt to detect navigation titles from the SwiftUI environment
+    func autoTrackWithNavigationTitle(data: [String: Any] = [:]) -> some View {
+        self.onAppear {
+            // Try to get navigation title from environment or use view type name
+            let viewTypeName = String(describing: type(of: self))
+            let cleanName = viewTypeName
+                .replacingOccurrences(of: "NavigationStack<", with: "")
+                .replacingOccurrences(of: "NavigationView<", with: "")
+                .replacingOccurrences(of: "TabView<", with: "")
+                .replacingOccurrences(of: "Optional<", with: "")
+                .replacingOccurrences(of: ">", with: "")
+                .split(separator: ".").last?.description ?? viewTypeName
+            
+            Tracker.shared.setCurrentNavigationTitle(cleanName)
+            Tracker.shared.trackScreenView(cleanName, data: data)
+        }
+        .onDisappear {
+            Tracker.shared.setCurrentNavigationTitle(nil)
+        }
+    }
+    
     /// Automatically infer a screen name from the view type and track on appear
     func autoTrackScreen(data: [String: Any] = [:]) -> some View {
         // Attempt to infer a more readable name by stripping common wrappers

@@ -32,6 +32,7 @@ public class Tracker: ObservableObject {
     private var frustrationInteractionTracker: FrustrationInteractionTracker?
     private var gestureTracker: GestureTracker?
     private var lastTrackedScreenName: String?
+    private var currentNavigationTitle: String?
     
     // MARK: - Initialization
     
@@ -543,13 +544,18 @@ public class Tracker: ObservableObject {
     }
     
     private func getCurrentPageTitle() -> String {
-        // Return the current screen name as the page title
-        return currentScreenName
+        // Prioritize navigation title over screen name for page title
+        return currentNavigationTitle ?? currentScreenName
     }
     
     /// Update the current screen name for tracking
     public func setCurrentScreenName(_ screenName: String) {
         currentScreenName = screenName
+    }
+    
+    /// Update the current navigation title for tracking
+    public func setCurrentNavigationTitle(_ navigationTitle: String?) {
+        currentNavigationTitle = navigationTitle
     }
     
     /// Set the user ID for tracking

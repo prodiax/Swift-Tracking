@@ -41,6 +41,7 @@ final class DeviceInfoTests: XCTestCase {
         
         XCTAssertNotNil(dictionary["version"] as? String)
         XCTAssertNotNil(dictionary["model"] as? String)
-        XCTAssertEqual(dictionary.count, 3)
+        XCTAssertNotNil(dictionary["deviceId"] as? String)
+        XCTAssertEqual(dictionary.count, 4)
     }
 }

@@ -108,22 +108,55 @@ import SwiftTracking
 
 struct ContentView: View {
     var body: some View {
-        VStack {
-            Text("Hello, World!")
-                .trackScreenView("Home Screen")
-            
-            Button("Click me!") {
-                // Your action
+        NavigationView {
+            VStack {
+                Text("Hello, World!")
+                    .trackScreenView("Home Screen")
+                
+                Button("Click me!") {
+                    // Your action
+                }
+                .trackButtonTap("Click me!")
+                
+                // Use custom tracking components
+                TrackingButton("Custom Button", data: ["section": "demo"]) {
+                    // Your action
+                } label: {
+                    Text("Custom Button")
+                }
             }
-            .trackButtonTap("Click me!")
-            
-            // Use custom tracking components
-            TrackingButton("Custom Button", data: ["section": "demo"]) {
-                // Your action
-            } label: {
-                Text("Custom Button")
-            }
+            .navigationTitle("Home")
+            .trackNavigationTitle("Home", data: ["section": "main"])
         }
+    }
+}
+```
+
+### 4. Navigation Title Tracking
+
+The SDK automatically captures navigation titles and uses them as the `page_title` in events:
+
+```swift
+struct DetailView: View {
+    var body: some View {
+        VStack {
+            Text("Detail Content")
+        }
+        .navigationTitle("Detail Screen")
+        .trackNavigationTitle("Detail Screen", data: ["source": "navigation"])
+    }
+}
+```
+
+For automatic detection without manual specification:
+
+```swift
+struct AutoTrackedView: View {
+    var body: some View {
+        VStack {
+            Text("Auto-tracked content")
+        }
+        .autoTrackWithNavigationTitle(data: ["auto": true])
     }
 }
 ```
@@ -229,6 +262,7 @@ func trackRotationGesture(location: CGPoint, angle: Angle, accessibilityLabel: S
 func flush() // Force flush events
 func setUserId(_ userId: String) // Set user ID
 func setCurrentScreenName(_ screenName: String) // Set current screen
+func setCurrentNavigationTitle(_ navigationTitle: String?) // Set current navigation title
 ```
 
 ### SwiftUI Modifiers
@@ -236,6 +270,12 @@ func setCurrentScreenName(_ screenName: String) // Set current screen
 ```swift
 // Screen view tracking
 .trackScreenView(_ screenName: String, data: [String: Any])
+
+// Navigation title tracking (automatically sets page_title to navigation title)
+.trackNavigationTitle(_ title: String, data: [String: Any])
+
+// Automatic navigation title detection
+.autoTrackWithNavigationTitle(data: [String: Any])
 
 // Button tap tracking
 .trackButtonTap(_ buttonTitle: String, data: [String: Any])

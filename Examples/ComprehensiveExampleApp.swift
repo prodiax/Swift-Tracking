@@ -342,6 +342,29 @@ struct ContentView: View {
                     .background(Color.teal.opacity(0.1))
                     .cornerRadius(10)
                     
+                    // Navigation Title Tracking Section
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Navigation Title Tracking")
+                            .font(.headline)
+                        
+                        Text("This section demonstrates automatic navigation title tracking. The page_title in events will be set to the navigation title.")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        
+                        Button("Show Auto-Tracked View") {
+                            showingDetail = true
+                        }
+                        .trackButtonTap("Show Auto-Tracked View", data: ["section": "navigation_tracking"])
+                        
+                        Text("Current page title will be: 'SwiftTracking Demo'")
+                            .font(.caption)
+                            .foregroundColor(.blue)
+                            .padding(.top, 5)
+                    }
+                    .padding()
+                    .background(Color.orange.opacity(0.1))
+                    .cornerRadius(10)
+                    
                     // Flush Events Section
                     VStack(alignment: .leading, spacing: 10) {
                         Text("Event Management")
@@ -370,6 +393,7 @@ struct ContentView: View {
             }
             .navigationTitle("SwiftTracking Demo")
             .navigationBarTitleDisplayMode(.inline)
+            .trackNavigationTitle("SwiftTracking Demo", data: ["section": "main"])
         }
         .sheet(isPresented: $showingDetail) {
             DetailView()
@@ -403,6 +427,7 @@ struct DetailView: View {
             .navigationTitle("Detail")
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarBackButtonHidden(true)
+            .trackNavigationTitle("Detail", data: ["source": "navigation", "parent": "main"])
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Back") {

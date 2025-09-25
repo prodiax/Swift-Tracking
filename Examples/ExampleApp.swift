@@ -90,6 +90,7 @@ struct ContentView: View {
             }
             .padding()
             .navigationTitle("Swift-Tracking Demo")
+            .trackNavigationTitle("Swift-Tracking Demo", data: ["section": "home"])
             .sheet(isPresented: $showingDetail) {
                 DetailView()
             }
@@ -134,6 +135,7 @@ struct DetailView: View {
             .padding()
             .navigationTitle("Detail")
             .navigationBarTitleDisplayMode(.inline)
+            .trackNavigationTitle("Detail", data: ["source": "navigation", "parent": "home"])
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Close") {
