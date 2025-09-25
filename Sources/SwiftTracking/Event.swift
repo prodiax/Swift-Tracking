@@ -23,6 +23,16 @@ public struct TrackingEvent: Codable {
     /// Element details for UI interactions
     public let elementDetails: String?
     
+    enum CodingKeys: String, CodingKey {
+        case eventId = "event_id"
+        case timestampUtc = "timestamp_utc"
+        case eventType = "event_type"
+        case pageUrl = "page_url"
+        case pageTitle = "page_title"
+        case data
+        case elementDetails = "element_details"
+    }
+    
     public init(
         eventType: String,
         pageUrl: String = "",
@@ -71,6 +81,17 @@ public struct TrackingPayload: Codable {
     
     /// Array of events
     public let events: [TrackingEvent]
+    
+    enum CodingKeys: String, CodingKey {
+        case productId = "productId"
+        case sessionId = "sessionId"
+        case anonymousId = "anonymousId"
+        case userId = "userId"
+        case timestampUtc = "timestamp_utc"
+        case deviceInfo = "device_info"
+        case pageUrl = "page_url"
+        case events
+    }
     
     public init(
         productId: String,

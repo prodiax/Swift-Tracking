@@ -27,8 +27,8 @@ public class GestureTracker {
         var eventData = data
         eventData[TrackingConstants.APP_ACTION_PROPERTY] = "tap"
         eventData[TrackingConstants.APP_GESTURE_RECOGNIZER_PROPERTY] = "TapGesture"
-        eventData[TrackingConstants.COORDINATE_X_PROPERTY] = location.x
-        eventData[TrackingConstants.COORDINATE_Y_PROPERTY] = location.y
+        eventData[TrackingConstants.COORDINATE_X_PROPERTY] = location.x.isFinite ? location.x : 0.0
+        eventData[TrackingConstants.COORDINATE_Y_PROPERTY] = location.y.isFinite ? location.y : 0.0
         
         if let accessibilityLabel = accessibilityLabel {
             eventData[TrackingConstants.APP_TARGET_AXLABEL_PROPERTY] = accessibilityLabel
@@ -54,9 +54,9 @@ public class GestureTracker {
         var eventData = data
         eventData[TrackingConstants.APP_ACTION_PROPERTY] = "long_press"
         eventData[TrackingConstants.APP_GESTURE_RECOGNIZER_PROPERTY] = "LongPressGesture"
-        eventData[TrackingConstants.COORDINATE_X_PROPERTY] = location.x
-        eventData[TrackingConstants.COORDINATE_Y_PROPERTY] = location.y
-        eventData[TrackingConstants.DURATION_PROPERTY] = duration
+        eventData[TrackingConstants.COORDINATE_X_PROPERTY] = location.x.isFinite ? location.x : 0.0
+        eventData[TrackingConstants.COORDINATE_Y_PROPERTY] = location.y.isFinite ? location.y : 0.0
+        eventData[TrackingConstants.DURATION_PROPERTY] = duration.isFinite ? duration : 0.0
         
         if let accessibilityLabel = accessibilityLabel {
             eventData[TrackingConstants.APP_TARGET_AXLABEL_PROPERTY] = accessibilityLabel
@@ -83,12 +83,12 @@ public class GestureTracker {
         var eventData = data
         eventData[TrackingConstants.APP_ACTION_PROPERTY] = "drag"
         eventData[TrackingConstants.APP_GESTURE_RECOGNIZER_PROPERTY] = "DragGesture"
-        eventData["start_x"] = startLocation.x
-        eventData["start_y"] = startLocation.y
-        eventData["end_x"] = endLocation.x
-        eventData["end_y"] = endLocation.y
-        eventData["translation_x"] = translation.width
-        eventData["translation_y"] = translation.height
+        eventData["start_x"] = startLocation.x.isFinite ? startLocation.x : 0.0
+        eventData["start_y"] = startLocation.y.isFinite ? startLocation.y : 0.0
+        eventData["end_x"] = endLocation.x.isFinite ? endLocation.x : 0.0
+        eventData["end_y"] = endLocation.y.isFinite ? endLocation.y : 0.0
+        eventData["translation_x"] = translation.width.isFinite ? translation.width : 0.0
+        eventData["translation_y"] = translation.height.isFinite ? translation.height : 0.0
         
         if let accessibilityLabel = accessibilityLabel {
             eventData[TrackingConstants.APP_TARGET_AXLABEL_PROPERTY] = accessibilityLabel
@@ -114,9 +114,9 @@ public class GestureTracker {
         var eventData = data
         eventData[TrackingConstants.APP_ACTION_PROPERTY] = "pinch"
         eventData[TrackingConstants.APP_GESTURE_RECOGNIZER_PROPERTY] = "MagnificationGesture"
-        eventData[TrackingConstants.COORDINATE_X_PROPERTY] = location.x
-        eventData[TrackingConstants.COORDINATE_Y_PROPERTY] = location.y
-        eventData["scale"] = scale
+        eventData[TrackingConstants.COORDINATE_X_PROPERTY] = location.x.isFinite ? location.x : 0.0
+        eventData[TrackingConstants.COORDINATE_Y_PROPERTY] = location.y.isFinite ? location.y : 0.0
+        eventData["scale"] = scale.isFinite ? scale : 1.0
         
         if let accessibilityLabel = accessibilityLabel {
             eventData[TrackingConstants.APP_TARGET_AXLABEL_PROPERTY] = accessibilityLabel
@@ -142,10 +142,10 @@ public class GestureTracker {
         var eventData = data
         eventData[TrackingConstants.APP_ACTION_PROPERTY] = "rotation"
         eventData[TrackingConstants.APP_GESTURE_RECOGNIZER_PROPERTY] = "RotationGesture"
-        eventData[TrackingConstants.COORDINATE_X_PROPERTY] = location.x
-        eventData[TrackingConstants.COORDINATE_Y_PROPERTY] = location.y
-        eventData["angle_degrees"] = angle.degrees
-        eventData["angle_radians"] = angle.radians
+        eventData[TrackingConstants.COORDINATE_X_PROPERTY] = location.x.isFinite ? location.x : 0.0
+        eventData[TrackingConstants.COORDINATE_Y_PROPERTY] = location.y.isFinite ? location.y : 0.0
+        eventData["angle_degrees"] = angle.degrees.isFinite ? angle.degrees : 0.0
+        eventData["angle_radians"] = angle.radians.isFinite ? angle.radians : 0.0
         
         if let accessibilityLabel = accessibilityLabel {
             eventData[TrackingConstants.APP_TARGET_AXLABEL_PROPERTY] = accessibilityLabel

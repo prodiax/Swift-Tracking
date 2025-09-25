@@ -28,10 +28,14 @@ public class FrustrationInteractionTracker {
     public func trackClick(x: Double, y: Double) {
         guard isEnabled else { return }
         
+        // Validate coordinates to prevent NaN values
+        let validX = x.isFinite ? x : 0.0
+        let validY = y.isFinite ? y : 0.0
+        
         let now = Date()
         
         // Add to click history
-        clickHistory.append((time: now, x: x, y: y))
+        clickHistory.append((time: now, x: validX, y: validY))
         
         // Clean old clicks
         clickHistory = clickHistory.filter { now.timeIntervalSince($0.time) <= rageClickTimeWindow }

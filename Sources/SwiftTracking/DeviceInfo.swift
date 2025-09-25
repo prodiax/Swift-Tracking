@@ -60,7 +60,8 @@ public struct DeviceInfo {
         return [
             "os": os,
             "version": version,
-            "model": model
+            "model": model,
+            "deviceId": deviceId
         ]
     }
 }

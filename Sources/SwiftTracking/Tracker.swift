@@ -562,14 +562,33 @@ public class Tracker: ObservableObject {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.timeoutInterval = 30.0 // 30 second timeout
         
         do {
             let jsonData = try JSONEncoder().encode(payload)
             request.httpBody = jsonData
             
+            // Debug: Print the JSON payload
+            if let jsonString = String(data: jsonData, encoding: .utf8) {
+                print("SwiftTracking: Sending payload: \(jsonString)")
+            }
+            
             URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
                 if let error = error {
                     print("SwiftTracking: Failed to send events: \(error.localizedDescription)")
+                    
+                    // Check if it's a connection error
+                    if let urlError = error as? URLError {
+                        switch urlError.code {
+                        case .cannotConnectToHost, .networkConnectionLost, .notConnectedToInternet:
+                            print("SwiftTracking: Network connection issue - will retry later")
+                        case .timedOut:
+                            print("SwiftTracking: Request timed out - will retry later")
+                        default:
+                            print("SwiftTracking: URL Error: \(urlError.localizedDescription)")
+                        }
+                    }
+                    
                     // Re-queue events on failure
                     self?.queue.async { [weak self] in
                         self?.eventQueue.insert(contentsOf: events, at: 0)
@@ -579,6 +598,9 @@ public class Tracker: ObservableObject {
                         print("SwiftTracking: Successfully sent \(events.count) events")
                     } else {
                         print("SwiftTracking: Server error: \(httpResponse.statusCode)")
+                        if let data = data, let responseString = String(data: data, encoding: .utf8) {
+                            print("SwiftTracking: Server response: \(responseString)")
+                        }
                         // Re-queue events on server error
                         self?.queue.async { [weak self] in
                             self?.eventQueue.insert(contentsOf: events, at: 0)
@@ -589,6 +611,18 @@ public class Tracker: ObservableObject {
             
         } catch {
             print("SwiftTracking: Failed to encode payload: \(error.localizedDescription)")
+            print("SwiftTracking: Error details: \(error)")
+            
+            // Try to encode individual events to identify the problematic one
+            for (index, event) in events.enumerated() {
+                do {
+                    let _ = try JSONEncoder().encode(event)
+                    print("SwiftTracking: Event \(index) encoded successfully")
+                } catch {
+                    print("SwiftTracking: Event \(index) failed to encode: \(error)")
+                }
+            }
+            
             // Re-queue events on encoding error
             queue.async { [weak self] in
                 self?.eventQueue.insert(contentsOf: events, at: 0)
