@@ -1,0 +1,138 @@
+import Foundation
+
+/// Plugin for tracking network requests
+public class NetworkTrackingPlugin {
+    private weak var tracker: Tracker?
+    private var isEnabled: Bool = false
+    
+    public init(tracker: Tracker) {
+        self.tracker = tracker
+    }
+    
+    /// Enable or disable network tracking
+    public func setEnabled(_ enabled: Bool) {
+        self.isEnabled = enabled
+    }
+    
+    /// Track a network request
+    public func trackNetworkRequest(
+        url: String,
+        method: String,
+        statusCode: Int? = nil,
+        errorCode: Int? = nil,
+        errorMessage: String? = nil,
+        startTime: Date,
+        completionTime: Date? = nil,
+        requestBodySize: Int? = nil,
+        responseBodySize: Int? = nil,
+        requestHeaders: [String: String]? = nil,
+        responseHeaders: [String: String]? = nil,
+        requestBody: String? = nil,
+        responseBody: String? = nil
+    ) {
+        guard isEnabled else { return }
+        
+        var eventData: [String: Any] = [:]
+        eventData[TrackingConstants.NETWORK_URL_PROPERTY] = url
+        eventData[TrackingConstants.NETWORK_REQUEST_METHOD_PROPERTY] = method
+        eventData[TrackingConstants.NETWORK_START_TIME_PROPERTY] = startTime.timeIntervalSince1970
+        
+        // Parse URL components
+        if let urlObj = URL(string: url) {
+            if let query = urlObj.query {
+                eventData[TrackingConstants.NETWORK_URL_QUERY_PROPERTY] = query
+            }
+            if let fragment = urlObj.fragment {
+                eventData[TrackingConstants.NETWORK_URL_FRAGMENT_PROPERTY] = fragment
+            }
+        }
+        
+        if let statusCode = statusCode {
+            eventData[TrackingConstants.NETWORK_STATUS_CODE_PROPERTY] = statusCode
+        }
+        
+        if let errorCode = errorCode {
+            eventData[TrackingConstants.NETWORK_ERROR_CODE_PROPERTY] = errorCode
+        }
+        
+        if let errorMessage = errorMessage {
+            eventData[TrackingConstants.NETWORK_ERROR_MESSAGE_PROPERTY] = errorMessage
+        }
+        
+        if let completionTime = completionTime {
+            eventData[TrackingConstants.NETWORK_COMPLETION_TIME_PROPERTY] = completionTime.timeIntervalSince1970
+        }
+        
+        if let requestBodySize = requestBodySize {
+            eventData[TrackingConstants.NETWORK_REQUEST_BODY_SIZE_PROPERTY] = requestBodySize
+        }
+        
+        if let responseBodySize = responseBodySize {
+            eventData[TrackingConstants.NETWORK_RESPONSE_BODY_SIZE_PROPERTY] = responseBodySize
+        }
+        
+        if let requestHeaders = requestHeaders {
+            eventData[TrackingConstants.NETWORK_REQUEST_HEADERS_PROPERTY] = requestHeaders
+        }
+        
+        if let responseHeaders = responseHeaders {
+            eventData[TrackingConstants.NETWORK_RESPONSE_HEADERS_PROPERTY] = responseHeaders
+        }
+        
+        if let requestBody = requestBody {
+            eventData[TrackingConstants.NETWORK_REQUEST_BODY_PROPERTY] = requestBody
+        }
+        
+        if let responseBody = responseBody {
+            eventData[TrackingConstants.NETWORK_RESPONSE_BODY_PROPERTY] = responseBody
+        }
+        
+        tracker?.track(eventType: TrackingConstants.NETWORK_REQUEST_EVENT, data: eventData)
+    }
+    
+    /// Track a successful network request
+    public func trackSuccessfulRequest(
+        url: String,
+        method: String,
+        statusCode: Int,
+        startTime: Date,
+        completionTime: Date,
+        requestBodySize: Int? = nil,
+        responseBodySize: Int? = nil,
+        requestHeaders: [String: String]? = nil,
+        responseHeaders: [String: String]? = nil
+    ) {
+        trackNetworkRequest(
+            url: url,
+            method: method,
+            statusCode: statusCode,
+            startTime: startTime,
+            completionTime: completionTime,
+            requestBodySize: requestBodySize,
+            responseBodySize: responseBodySize,
+            requestHeaders: requestHeaders,
+            responseHeaders: responseHeaders
+        )
+    }
+    
+    /// Track a failed network request
+    public func trackFailedRequest(
+        url: String,
+        method: String,
+        errorCode: Int,
+        errorMessage: String,
+        startTime: Date,
+        completionTime: Date? = nil,
+        requestBodySize: Int? = nil
+    ) {
+        trackNetworkRequest(
+            url: url,
+            method: method,
+            errorCode: errorCode,
+            errorMessage: errorMessage,
+            startTime: startTime,
+            completionTime: completionTime,
+            requestBodySize: requestBodySize
+        )
+    }
+}
