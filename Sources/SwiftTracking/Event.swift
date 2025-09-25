@@ -57,8 +57,8 @@ public struct TrackingPayload: Codable {
     /// Anonymous identifier
     public let anonymousId: String
     
-    /// User identifier (optional)
-    public let userId: String?
+    /// User identifier (empty string if not available)
+    public let userId: String
     
     /// Payload timestamp in UTC ISO format
     public let timestampUtc: String
@@ -83,8 +83,8 @@ public struct TrackingPayload: Codable {
     ) {
         self.productId = productId
         self.sessionId = sessionId
-        self.anonymousId = anonymousId
-        self.userId = userId
+        self.anonymousId = anonymousId.isEmpty ? "" : anonymousId
+        self.userId = userId?.isEmpty == false ? userId! : ""
         self.timestampUtc = Self.getCurrentTimestamp()
         self.pageUrl = pageUrl
         self.events = events

@@ -16,6 +16,7 @@ public class Tracker: ObservableObject {
     private var deviceInfo: DeviceInfo
     private var sessionId: String
     private var anonymousId: String
+    private var userId: String?
     private var lastEventTime: Date
     private var eventQueue: [TrackingEvent] = []
     private var flushTimer: Timer?
@@ -48,7 +49,7 @@ public class Tracker: ObservableObject {
     /// Start tracking with the provided configuration
     public func start(with config: TrackingConfig) {
         self.config = config
-        self.anonymousId = config.anonymousId ?? deviceInfo.deviceId
+        // anonymousId is set to deviceId in init, no need to override from config
         
         // Initialize app version tracker
         self.appVersionTracker = AppVersionTracker(storage: storage, tracker: self)
@@ -537,12 +538,17 @@ public class Tracker: ObservableObject {
         currentScreenName = screenName
     }
     
+    /// Set the user ID for tracking
+    public func setUserId(_ userId: String?) {
+        self.userId = userId
+    }
+    
     private func sendEvents(_ events: [TrackingEvent], config: TrackingConfig) {
         let payload = TrackingPayload(
             productId: config.productId,
             sessionId: sessionId,
             anonymousId: anonymousId,
-            userId: config.userId,
+            userId: userId,
             pageUrl: getCurrentPageUrl(),
             events: events,
             deviceInfo: deviceInfo.toDictionary()

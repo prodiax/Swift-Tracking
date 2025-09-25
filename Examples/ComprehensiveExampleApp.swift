@@ -19,10 +19,10 @@ struct ComprehensiveExampleApp: App {
         let config = TrackingConfig(
             productId: "com.example.comprehensive",
             trackingEndpoint: "https://api.example.com/track",
-            flushIntervalSeconds: 30,
-            flushBatchSize: 10,
+            enableAutoCapture: true,
             sessionTimeoutSeconds: 300,
-            enableAutoCapture: true
+            batchSize: 10,
+            flushIntervalSeconds: 30
         )
         
         tracker.start(with: config)

@@ -8,12 +8,6 @@ public struct TrackingConfig {
     /// Required: Endpoint URL for sending tracking data
     public let trackingEndpoint: String
     
-    /// Optional: User identifier
-    public let userId: String?
-    
-    /// Optional: Anonymous identifier
-    public let anonymousId: String?
-    
     /// Optional: Enable auto-capture features
     public let enableAutoCapture: Bool
     
@@ -29,8 +23,6 @@ public struct TrackingConfig {
     public init(
         productId: String,
         trackingEndpoint: String,
-        userId: String? = nil,
-        anonymousId: String? = nil,
         enableAutoCapture: Bool = true,
         sessionTimeoutSeconds: TimeInterval = 3600, // 1 hour
         batchSize: Int = 10,
@@ -38,8 +30,6 @@ public struct TrackingConfig {
     ) {
         self.productId = productId
         self.trackingEndpoint = trackingEndpoint
-        self.userId = userId
-        self.anonymousId = anonymousId
         self.enableAutoCapture = enableAutoCapture
         self.sessionTimeoutSeconds = sessionTimeoutSeconds
         self.batchSize = batchSize

@@ -8,7 +8,6 @@ struct ExampleApp: App {
         let config = TrackingConfig(
             productId: "example-app",
             trackingEndpoint: "https://httpbin.org/post", // Using httpbin for testing
-            userId: "demo-user-123",
             enableAutoCapture: true,
             sessionTimeoutSeconds: 1800, // 30 minutes
             batchSize: 5,
@@ -16,6 +15,9 @@ struct ExampleApp: App {
         )
         
         Tracker.shared.start(with: config)
+        
+        // Set user ID separately if needed
+        Tracker.shared.setUserId("demo-user-123")
     }
     
     var body: some Scene {

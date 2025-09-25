@@ -62,14 +62,17 @@ import SwiftTracking
 let config = TrackingConfig(
     productId: "your-product-id",
     trackingEndpoint: "https://your-api.com/track",
-    flushIntervalSeconds: 30,
-    flushBatchSize: 10,
+    enableAutoCapture: true,
     sessionTimeoutSeconds: 300,
-    enableAutoCapture: true
+    batchSize: 10,
+    flushIntervalSeconds: 30
 )
 
 // Start tracking
 Tracker.shared.start(with: config)
+
+// Set user ID separately if needed
+Tracker.shared.setUserId("user-123")
 ```
 
 ### 2. Track Events
@@ -161,11 +164,10 @@ The SDK automatically tracks the following events when `enableAutoCapture` is tr
 public struct TrackingConfig {
     public let productId: String                    // Your product identifier
     public let trackingEndpoint: String            // API endpoint for events
-    public let flushIntervalSeconds: Double        // Auto-flush interval
-    public let flushBatchSize: Int                 // Batch size for flushing
-    public let sessionTimeoutSeconds: Double       // Session timeout
     public let enableAutoCapture: Bool             // Enable auto-capture features
-    public let anonymousId: String?                // Custom anonymous ID
+    public let sessionTimeoutSeconds: Double       // Session timeout
+    public let batchSize: Int                      // Batch size for flushing
+    public let flushIntervalSeconds: Double        // Auto-flush interval
 }
 ```
 
