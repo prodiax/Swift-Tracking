@@ -11,7 +11,12 @@ struct ExampleApp: App {
             enableAutoCapture: true,
             sessionTimeoutSeconds: 1800, // 30 minutes
             batchSize: 5,
-            flushIntervalSeconds: 10
+            flushIntervalSeconds: 10,
+            enableDebugLogging: true,
+            filterSystemUI: true,
+            deadClickTimeout: 2.0,
+            enableFrustrationTracking: true,
+            maxDeadClicksPerMinute: 3
         )
         
         Tracker.shared.start(with: config)

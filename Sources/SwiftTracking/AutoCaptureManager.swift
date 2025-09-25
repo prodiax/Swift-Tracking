@@ -24,9 +24,20 @@ final class AutoCaptureManager {
 
     func handleViewDidAppear(viewController: UIViewController) {
         let rawName = String(describing: type(of: viewController))
+        
+        // Filter out system UI controllers
+        guard !Self.isSystemUIController(rawName) else {
+            return // Don't track system UI screens
+        }
+        
         let screenName = Self.extractSwiftUIViewNameIfHostingController(from: rawName)
             ?? viewController.title
             ?? rawName
+
+        // Ensure we have a meaningful screen name
+        guard Self.isMeaningfulScreenName(screenName) else {
+            return // Skip generic or system names
+        }
 
         Tracker.shared.setCurrentScreenName(screenName)
         Tracker.shared.trackScreenView(screenName)
@@ -101,6 +112,67 @@ final class AutoCaptureManager {
         // If it still contains nested generics, keep the last type token
         let tokens = flattened.split(separator: ".")
         return String(tokens.last ?? flattened)
+    }
+    
+    /// Check if a view controller is a system UI component that should be filtered out
+    private static func isSystemUIController(_ controllerName: String) -> Bool {
+        let systemControllers = [
+            "UISystemKeyboardDockController",
+            "UIKeyboardLayoutStar",
+            "UIInputWindowController",
+            "UINavigationController",
+            "UITabBarController",
+            "UISplitViewController",
+            "UIPageViewController",
+            "UIAlertController",
+            "UIActivityViewController",
+            "UISearchController",
+            "UIReferenceLibraryViewController",
+            "UIWebViewController",
+            "SFSafariViewController",
+            "MFMailComposeViewController",
+            "MFMessageComposeViewController",
+            "UIImagePickerController",
+            "UIVideoEditorController",
+            "UIPrintInteractionController",
+            "UIPopoverController",
+            "UIPopoverPresentationController"
+        ]
+        
+        return systemControllers.contains(controllerName)
+    }
+    
+    /// Check if a screen name is meaningful and should be tracked
+    private static func isMeaningfulScreenName(_ screenName: String) -> Bool {
+        // Skip very short names
+        guard screenName.count >= 3 else { return false }
+        
+        // Skip names that are too generic
+        let genericNames = [
+            "Element", "View", "Controller", "VC", "ViewController",
+            "UI", "System", "Keyboard", "Dock", "Layout", "Window",
+            "Container", "Wrapper", "Host", "Root", "Main", "Base"
+        ]
+        
+        // Check if the name contains generic terms
+        for genericName in genericNames {
+            if screenName.contains(genericName) && screenName.count < 10 {
+                return false
+            }
+        }
+        
+        // Skip names that start with UI (system components)
+        if screenName.hasPrefix("UI") && !screenName.contains("User") {
+            return false
+        }
+        
+        // Skip names that are just numbers or special characters
+        let alphanumericCount = screenName.filter { $0.isLetter || $0.isNumber }.count
+        if alphanumericCount < 3 {
+            return false
+        }
+        
+        return true
     }
 }
 

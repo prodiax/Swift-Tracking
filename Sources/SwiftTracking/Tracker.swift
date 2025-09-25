@@ -68,6 +68,7 @@ public class Tracker: ObservableObject {
         
         // Initialize frustration interaction tracker
         self.frustrationInteractionTracker = FrustrationInteractionTracker(tracker: self)
+        self.frustrationInteractionTracker?.updateDeadClickTimeout(config.deadClickTimeout)
         
         // Initialize gesture tracker
         self.gestureTracker = GestureTracker(tracker: self)
@@ -79,7 +80,9 @@ public class Tracker: ObservableObject {
             #endif
             // Enable SwiftUI gesture capture
             self.gestureTracker?.setEnabled(true)
-            self.frustrationInteractionTracker?.setEnabled(true)
+            if config.enableFrustrationTracking {
+                self.frustrationInteractionTracker?.setEnabled(true)
+            }
         }
         
         // Check for app install/update events
@@ -120,6 +123,12 @@ public class Tracker: ObservableObject {
                 pageTitle: self.getCurrentPageTitle(),
                 data: data
             )
+            
+            // Apply event filtering
+            guard self.shouldTrackEvent(event) else {
+                self.debugLog("SwiftTracking: Event filtered out: \(eventType)")
+                return
+            }
             
             self.eventQueue.append(event)
             self.lastEventTime = Date()
@@ -565,6 +574,40 @@ public class Tracker: ObservableObject {
     
     // Expose config to plugins in a read-only manner
     internal func configForPlugins() -> TrackingConfig? { config }
+    
+    /// Check if an event should be tracked based on filtering rules
+    private func shouldTrackEvent(_ event: TrackingEvent) -> Bool {
+        guard let config = config else { return true }
+        
+        // Filter system UI events if enabled
+        if config.filterSystemUI {
+            let systemUIKeywords = ["UI", "System", "Keyboard", "Dock", "Layout", "Window"]
+            if systemUIKeywords.contains(where: { event.pageTitle.contains($0) }) {
+                return false
+            }
+        }
+        
+        // Filter excessive dead clicks
+        if event.eventType == TrackingConstants.DEAD_CLICK_EVENT {
+            return shouldAllowDeadClickEvent()
+        }
+        
+        return true
+    }
+    
+    /// Check if dead click event should be allowed based on rate limiting
+    private func shouldAllowDeadClickEvent() -> Bool {
+        guard let config = config else { return true }
+        
+        // Count recent dead clicks in the event queue
+        let now = Date()
+        let recentDeadClicks = eventQueue.filter { event in
+            event.eventType == TrackingConstants.DEAD_CLICK_EVENT &&
+            now.timeIntervalSince(Date(timeIntervalSince1970: event.data[TrackingConstants.BEGIN_TIME_PROPERTY]?.value as? Double ?? 0)) < 60
+        }
+        
+        return recentDeadClicks.count < config.maxDeadClicksPerMinute
+    }
     
     // MARK: - Debug Logging
     

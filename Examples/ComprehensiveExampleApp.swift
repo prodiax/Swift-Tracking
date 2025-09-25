@@ -22,7 +22,12 @@ struct ComprehensiveExampleApp: App {
             enableAutoCapture: true,
             sessionTimeoutSeconds: 300,
             batchSize: 10,
-            flushIntervalSeconds: 30
+            flushIntervalSeconds: 30,
+            enableDebugLogging: true,
+            filterSystemUI: true,
+            deadClickTimeout: 2.0,
+            enableFrustrationTracking: true,
+            maxDeadClicksPerMinute: 3
         )
         
         tracker.start(with: config)

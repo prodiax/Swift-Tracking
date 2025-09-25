@@ -32,6 +32,18 @@ public struct TrackingConfig {
     /// Debug: enable debug logging (default: false)
     public let enableDebugLogging: Bool
     
+    /// Filter out system UI events (default: true)
+    public let filterSystemUI: Bool
+    
+    /// Minimum dead click timeout in seconds (default: 2.0)
+    public let deadClickTimeout: TimeInterval
+    
+    /// Enable frustration interaction tracking (default: true)
+    public let enableFrustrationTracking: Bool
+    
+    /// Maximum dead clicks per minute (default: 3)
+    public let maxDeadClicksPerMinute: Int
+    
     public init(
         productId: String,
         trackingEndpoint: String,
@@ -42,7 +54,11 @@ public struct TrackingConfig {
         captureNetworkQueryParams: Bool = false,
         captureNetworkHeaders: Bool = false,
         captureNetworkBodies: Bool = false,
-        enableDebugLogging: Bool = false
+        enableDebugLogging: Bool = false,
+        filterSystemUI: Bool = true,
+        deadClickTimeout: TimeInterval = 2.0,
+        enableFrustrationTracking: Bool = true,
+        maxDeadClicksPerMinute: Int = 3
     ) {
         self.productId = productId
         self.trackingEndpoint = trackingEndpoint
@@ -54,5 +70,9 @@ public struct TrackingConfig {
         self.captureNetworkHeaders = captureNetworkHeaders
         self.captureNetworkBodies = captureNetworkBodies
         self.enableDebugLogging = enableDebugLogging
+        self.filterSystemUI = filterSystemUI
+        self.deadClickTimeout = deadClickTimeout
+        self.enableFrustrationTracking = enableFrustrationTracking
+        self.maxDeadClicksPerMinute = maxDeadClicksPerMinute
     }
 }

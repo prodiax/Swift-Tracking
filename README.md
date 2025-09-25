@@ -65,7 +65,12 @@ let config = TrackingConfig(
     enableAutoCapture: true,
     sessionTimeoutSeconds: 300,
     batchSize: 10,
-    flushIntervalSeconds: 30
+    flushIntervalSeconds: 30,
+    enableDebugLogging: false,
+    filterSystemUI: true,
+    deadClickTimeout: 2.0,
+    enableFrustrationTracking: true,
+    maxDeadClicksPerMinute: 3
 )
 
 // Start tracking
@@ -201,6 +206,14 @@ public struct TrackingConfig {
     public let sessionTimeoutSeconds: Double       // Session timeout
     public let batchSize: Int                      // Batch size for flushing
     public let flushIntervalSeconds: Double        // Auto-flush interval
+    public let captureNetworkQueryParams: Bool     // Include URL query params in network events
+    public let captureNetworkHeaders: Bool         // Include request/response headers
+    public let captureNetworkBodies: Bool          // Include request/response bodies
+    public let enableDebugLogging: Bool            // Enable debug logging
+    public let filterSystemUI: Bool                // Filter out system UI events
+    public let deadClickTimeout: TimeInterval      // Dead click detection timeout
+    public let enableFrustrationTracking: Bool     // Enable frustration interaction tracking
+    public let maxDeadClicksPerMinute: Int         // Maximum dead clicks per minute
 }
 ```
 

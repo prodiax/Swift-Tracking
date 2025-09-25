@@ -13,7 +13,8 @@ public class FrustrationInteractionTracker {
     
     // Dead click detection
     private var deadClickStartTime: Date?
-    private let deadClickTimeout: TimeInterval = 0.5 // 500ms
+    private var deadClickTimeout: TimeInterval = 2.0 // 2 seconds
+    private var deadClickHistory: [Date] = []
     
     public init(tracker: Tracker) {
         self.tracker = tracker
@@ -22,6 +23,11 @@ public class FrustrationInteractionTracker {
     /// Enable or disable frustration interaction tracking
     public func setEnabled(_ enabled: Bool) {
         self.isEnabled = enabled
+    }
+    
+    /// Update dead click timeout from config
+    public func updateDeadClickTimeout(_ timeout: TimeInterval) {
+        self.deadClickTimeout = timeout
     }
     
     /// Track a click for rage click detection
@@ -107,6 +113,12 @@ public class FrustrationInteractionTracker {
     private func checkForDeadClick() {
         guard let startTime = deadClickStartTime else { return }
         
+        // Check if we should track this dead click (rate limiting)
+        guard shouldTrackDeadClick() else {
+            deadClickStartTime = nil
+            return
+        }
+        
         // If we still have a start time, it means no response was detected
         let duration = Date().timeIntervalSince(startTime)
         
@@ -117,6 +129,29 @@ public class FrustrationInteractionTracker {
         
         tracker?.track(eventType: TrackingConstants.DEAD_CLICK_EVENT, data: eventData)
         
+        // Add to dead click history for rate limiting
+        deadClickHistory.append(Date())
+        cleanDeadClickHistory()
+        
         deadClickStartTime = nil
+    }
+    
+    private func shouldTrackDeadClick() -> Bool {
+        guard let config = tracker?.configForPlugins() else { return true }
+        
+        // Check rate limiting
+        let now = Date()
+        let recentDeadClicks = deadClickHistory.filter { 
+            now.timeIntervalSince($0) < 60 // Last minute
+        }
+        
+        return recentDeadClicks.count < config.maxDeadClicksPerMinute
+    }
+    
+    private func cleanDeadClickHistory() {
+        let now = Date()
+        deadClickHistory = deadClickHistory.filter { 
+            now.timeIntervalSince($0) < 300 // Keep last 5 minutes
+        }
     }
 }
