@@ -43,7 +43,7 @@ public class NetworkTrackingPlugin {
             if config?.captureNetworkQueryParams == true, let query = urlObj.query {
                 eventData[TrackingConstants.NETWORK_URL_QUERY_PROPERTY] = Self.redactQuery(query)
             }
-            if let fragment = urlObj.fragment {
+            if urlObj.fragment != nil {
                 // fragments rarely contain sensitive data but exclude by default
             }
         }

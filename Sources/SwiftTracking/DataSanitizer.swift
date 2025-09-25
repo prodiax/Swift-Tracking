@@ -26,9 +26,9 @@ enum DataSanitizer {
             } else if let dict = value as? [String: Any] {
                 sanitized[key] = sanitizeElementEventData(dict)
             } else if let array = value as? [Any] {
-                sanitized[key] = array.map { item in
+                sanitized[key] = array.map { (item) -> Any in
                     if let s = item as? String { return containsSensitiveHint(in: s) ? "[REDACTED]" : s }
-                    if let d = item as? [String: Any] { return sanitizeElementEventData(d) }
+                    if let d = item as? [String: Any] { return sanitizeElementEventData(d) as Any }
                     return item
                 }
             } else {
