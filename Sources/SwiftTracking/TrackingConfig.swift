@@ -29,6 +29,9 @@ public struct TrackingConfig {
     /// Privacy: include request/response bodies in network events (default: false)
     public let captureNetworkBodies: Bool
     
+    /// Debug: enable debug logging (default: false)
+    public let enableDebugLogging: Bool
+    
     public init(
         productId: String,
         trackingEndpoint: String,
@@ -38,7 +41,8 @@ public struct TrackingConfig {
         flushIntervalSeconds: TimeInterval = 30,
         captureNetworkQueryParams: Bool = false,
         captureNetworkHeaders: Bool = false,
-        captureNetworkBodies: Bool = false
+        captureNetworkBodies: Bool = false,
+        enableDebugLogging: Bool = false
     ) {
         self.productId = productId
         self.trackingEndpoint = trackingEndpoint
@@ -49,5 +53,6 @@ public struct TrackingConfig {
         self.captureNetworkQueryParams = captureNetworkQueryParams
         self.captureNetworkHeaders = captureNetworkHeaders
         self.captureNetworkBodies = captureNetworkBodies
+        self.enableDebugLogging = enableDebugLogging
     }
 }
