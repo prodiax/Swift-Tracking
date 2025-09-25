@@ -200,7 +200,54 @@ The SDK now includes enhanced auto-capture that:
 - Prioritizes meaningful navigation titles over view controller names
 - Provides fallback to cleaned view type names when navigation titles aren't available
 
-This means that instead of seeing generic names like "NotifyingMulticolumnSplitViewController" or "SidebarStyleContext", you'll see meaningful titles like "Home", "Profile", or "Settings" in your tracking data.
+**Important Note for SwiftUI Apps**: While the auto-capture system works well for UIKit apps, SwiftUI apps require manual navigation title tracking for best results. The auto-capture system may still show generic names like "NotifyingMulticolumnSplitViewController" or "SidebarStyleContext" because SwiftUI's navigation system doesn't always expose navigation titles to the underlying UIKit view controllers.
+
+#### Recommended Approach for SwiftUI Apps
+
+For the best tracking experience in SwiftUI apps, we recommend using the manual tracking modifiers:
+
+```swift
+struct ContentView: View {
+    var body: some View {
+        NavigationView {
+            VStack {
+                Text("Welcome to our app!")
+            }
+            .navigationTitle("Home")
+            .trackNavigationTitle("Home", data: ["section": "main"])
+        }
+    }
+}
+
+struct ProfileView: View {
+    var body: some View {
+        VStack {
+            Text("User Profile")
+        }
+        .navigationTitle("Profile")
+        .trackNavigationTitle("Profile", data: ["section": "user"])
+    }
+}
+```
+
+#### Alternative: Using the Tracker Directly
+
+You can also use the Tracker directly in your SwiftUI views:
+
+```swift
+struct MyView: View {
+    var body: some View {
+        VStack {
+            Text("Content")
+        }
+        .onAppear {
+            Tracker.shared.setScreenAndNavigationTitle("My Screen", data: ["source": "navigation"])
+        }
+    }
+}
+```
+
+This approach ensures that your tracking data shows meaningful screen names instead of generic view controller names.
 
 ## Auto-Capture Events
 

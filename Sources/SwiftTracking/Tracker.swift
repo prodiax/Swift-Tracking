@@ -579,6 +579,13 @@ public class Tracker: ObservableObject {
         trackScreenView(navigationTitle, data: data)
     }
     
+    /// Set both screen name and navigation title for better tracking
+    public func setScreenAndNavigationTitle(_ title: String, data: [String: Any] = [:]) {
+        setCurrentScreenName(title)
+        setCurrentNavigationTitle(title)
+        trackScreenView(title, data: data)
+    }
+    
     /// Set the user ID for tracking
     public func setUserId(_ userId: String?) {
         self.userId = userId

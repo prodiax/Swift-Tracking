@@ -37,12 +37,13 @@ final class AutoCaptureManager {
         // Try to extract navigation title from the navigation context
         let navigationTitle = Self.extractNavigationTitle(from: viewController)
         
+        // Try to get a meaningful screen name
         let screenName = navigationTitle
             ?? Self.extractSwiftUIViewNameIfHostingController(from: rawName)
             ?? viewController.title
-            ?? rawName
+            ?? Self.generateFallbackScreenName(from: rawName)
 
-        // Ensure we have a meaningful screen name
+        // Only track if we have a meaningful screen name
         guard Self.isMeaningfulScreenName(screenName) else {
             return // Skip generic or system names
         }
@@ -119,8 +120,8 @@ final class AutoCaptureManager {
         }
         
         // Try to get title from navigation item
-        if let navItem = viewController.navigationItem,
-           let title = navItem.title, !title.isEmpty && isMeaningfulScreenName(title) {
+        let navItem = viewController.navigationItem
+        if let title = navItem.title, !title.isEmpty && isMeaningfulScreenName(title) {
             return title
         }
         
@@ -158,13 +159,62 @@ final class AutoCaptureManager {
         guard let startRange = vcTypeName.firstIndex(of: "<"), let endRange = vcTypeName.lastIndex(of: ">"), startRange < endRange else {
             return nil
         }
+        
         let generic = String(vcTypeName[vcTypeName.index(after: startRange)..<endRange])
+        
+        // Handle complex nested generics like "ModifiedContent<AnyView, RootModifier>"
+        let cleaned = cleanSwiftUIGenericType(generic)
+        
         // Take the last component if nested generics (e.g., NavigationStack<ContentView>)
-        let components = generic.split(separator: ",").first?.split(separator: ">").last?.split(separator: "<")
-        let flattened = components?.last ?? Substring(generic)
+        let components = cleaned.split(separator: ",").first?.split(separator: ">").last?.split(separator: "<")
+        let flattened = components?.last ?? Substring(cleaned)
+        
         // If it still contains nested generics, keep the last type token
         let tokens = flattened.split(separator: ".")
-        return String(tokens.last ?? flattened)
+        let result = String(tokens.last ?? flattened)
+        
+        // Only return if it's a meaningful name
+        return isMeaningfulScreenName(result) ? result : nil
+    }
+    
+    /// Clean SwiftUI generic type names to extract meaningful view names
+    private static func cleanSwiftUIGenericType(_ typeName: String) -> String {
+        var cleaned = typeName
+        
+        // Remove common SwiftUI wrapper types
+        let wrappersToRemove = [
+            "ModifiedContent<", "TupleView<", "Group<", "VStack<", "HStack<", "ZStack<",
+            "NavigationStack<", "NavigationView<", "TabView<", "Optional<", "AnyView"
+        ]
+        
+        for wrapper in wrappersToRemove {
+            cleaned = cleaned.replacingOccurrences(of: wrapper, with: "")
+        }
+        
+        // Remove trailing angle brackets and commas
+        cleaned = cleaned.replacingOccurrences(of: ">", with: "")
+        cleaned = cleaned.replacingOccurrences(of: ",", with: "")
+        
+        return cleaned.trimmingCharacters(in: .whitespaces)
+    }
+    
+    /// Generate a fallback screen name when we can't extract a meaningful one
+    private static func generateFallbackScreenName(from vcTypeName: String) -> String {
+        // For SwiftUI hosting controllers, try to extract the view name
+        if vcTypeName.contains("UIHostingController") {
+            if let extracted = extractSwiftUIViewNameIfHostingController(from: vcTypeName) {
+                return extracted
+            }
+            return "SwiftUIView"
+        }
+        
+        // For other view controllers, try to clean the name
+        let cleaned = vcTypeName
+            .replacingOccurrences(of: "ViewController", with: "")
+            .replacingOccurrences(of: "Controller", with: "")
+            .replacingOccurrences(of: "UI", with: "")
+        
+        return cleaned.isEmpty ? "UnknownScreen" : cleaned
     }
     
     /// Check if a view controller is a system UI component that should be filtered out
@@ -200,16 +250,20 @@ final class AutoCaptureManager {
         // Skip very short names
         guard screenName.count >= 3 else { return false }
         
-        // Skip names that are too generic
+        // Skip names that are too generic or system-related
         let genericNames = [
             "Element", "View", "Controller", "VC", "ViewController",
             "UI", "System", "Keyboard", "Dock", "Layout", "Window",
-            "Container", "Wrapper", "Host", "Root", "Main", "Base"
+            "Container", "Wrapper", "Host", "Root", "Main", "Base",
+            "StyleContext", "NoStyleContext", "SidebarStyleContext",
+            "NotifyingMulticolumnSplitViewController", "SplitViewController",
+            "NavigationController", "TabBarController", "PageViewController",
+            "AlertController", "ActivityViewController", "SearchController"
         ]
         
         // Check if the name contains generic terms
         for genericName in genericNames {
-            if screenName.contains(genericName) && screenName.count < 10 {
+            if screenName.contains(genericName) {
                 return false
             }
         }
@@ -219,9 +273,23 @@ final class AutoCaptureManager {
             return false
         }
         
+        // Skip names that start with underscore (private/internal classes)
+        if screenName.hasPrefix("_") {
+            return false
+        }
+        
         // Skip names that are just numbers or special characters
         let alphanumericCount = screenName.filter { $0.isLetter || $0.isNumber }.count
         if alphanumericCount < 3 {
+            return false
+        }
+        
+        // Skip names that look like SwiftUI internal types
+        if screenName.contains("ModifiedContent") || 
+           screenName.contains("TupleView") ||
+           screenName.contains("Group") ||
+           screenName.contains("NavigationStack") ||
+           screenName.contains("NavigationView") {
             return false
         }
         

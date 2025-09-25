@@ -75,4 +75,15 @@ final class NavigationTitleTrackingTests: XCTestCase {
         
         XCTAssertNoThrow(tracker.updateNavigationTitle("Test Title", data: testData))
     }
+    
+    func testSetScreenAndNavigationTitle() {
+        // Test the new setScreenAndNavigationTitle method
+        let testData: [String: Any] = ["test": "data"]
+        XCTAssertNoThrow(tracker.setScreenAndNavigationTitle("Test Screen", data: testData))
+    }
+    
+    func testSetScreenAndNavigationTitleWithoutData() {
+        // Test setScreenAndNavigationTitle without data
+        XCTAssertNoThrow(tracker.setScreenAndNavigationTitle("Test Screen"))
+    }
 }
