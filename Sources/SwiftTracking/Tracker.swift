@@ -69,6 +69,15 @@ public class Tracker: ObservableObject {
         // Initialize gesture tracker
         self.gestureTracker = GestureTracker(tracker: self)
         
+        // Enable auto-capture features
+        if config.enableAutoCapture {
+            #if canImport(UIKit)
+            AutoCaptureManager.shared.enable()
+            #endif
+            // Enable SwiftUI gesture capture
+            self.gestureTracker?.setEnabled(true)
+        }
+        
         // Check for app install/update events
         if config.enableAutoCapture {
             appVersionTracker?.checkAndTrackAppVersion()

@@ -10,6 +10,14 @@ public extension View {
         }
     }
     
+    /// Automatically infer a screen name from the view type and track on appear
+    func autoTrackScreen(data: [String: Any] = [:]) -> some View {
+        let inferred = String(describing: type(of: self))
+        return self.onAppear {
+            Tracker.shared.trackScreenView(inferred, data: data)
+        }
+    }
+    
     /// Track button taps
     func trackButtonTap(_ buttonTitle: String, data: [String: Any] = [:]) -> some View {
         self.onTapGesture {
