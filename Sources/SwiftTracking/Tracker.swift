@@ -565,6 +565,18 @@ public class Tracker: ObservableObject {
     /// Update the current navigation title for tracking
     public func setCurrentNavigationTitle(_ navigationTitle: String?) {
         currentNavigationTitle = navigationTitle
+        
+        // If we have a navigation title, also update the current screen name
+        // This ensures that page_title in events reflects the navigation title
+        if let title = navigationTitle, !title.isEmpty {
+            currentScreenName = title
+        }
+    }
+    
+    /// Update navigation title and track a screen view event
+    public func updateNavigationTitle(_ navigationTitle: String, data: [String: Any] = [:]) {
+        setCurrentNavigationTitle(navigationTitle)
+        trackScreenView(navigationTitle, data: data)
     }
     
     /// Set the user ID for tracking

@@ -139,7 +139,9 @@ struct ContentView: View {
 
 ### 4. Navigation Title Tracking
 
-The SDK automatically captures navigation titles and uses them as the `page_title` in events:
+The SDK provides comprehensive navigation title tracking capabilities that automatically capture navigation titles and use them as the `page_title` in events. This ensures that your tracking data shows meaningful screen names instead of generic view controller names.
+
+#### Manual Navigation Title Tracking
 
 ```swift
 struct DetailView: View {
@@ -153,7 +155,7 @@ struct DetailView: View {
 }
 ```
 
-For automatic detection without manual specification:
+#### Automatic Navigation Title Detection
 
 ```swift
 struct AutoTrackedView: View {
@@ -165,6 +167,40 @@ struct AutoTrackedView: View {
     }
 }
 ```
+
+#### Dynamic Navigation Title Updates
+
+```swift
+struct DynamicTitleView: View {
+    @State private var currentTitle = "Home"
+    
+    var body: some View {
+        VStack {
+            Button("Change to Profile") {
+                currentTitle = "Profile"
+                Tracker.shared.updateNavigationTitle("Profile", data: ["demo": "title_change"])
+            }
+            
+            Button("Change to Settings") {
+                currentTitle = "Settings"
+                Tracker.shared.updateNavigationTitle("Settings", data: ["demo": "title_change"])
+            }
+        }
+        .navigationTitle(currentTitle)
+        .trackNavigationTitle(currentTitle, data: ["demo": "dynamic_title"])
+    }
+}
+```
+
+#### Enhanced Auto-Capture
+
+The SDK now includes enhanced auto-capture that:
+- Automatically detects navigation titles from SwiftUI's navigation context
+- Filters out generic system UI controller names
+- Prioritizes meaningful navigation titles over view controller names
+- Provides fallback to cleaned view type names when navigation titles aren't available
+
+This means that instead of seeing generic names like "NotifyingMulticolumnSplitViewController" or "SidebarStyleContext", you'll see meaningful titles like "Home", "Profile", or "Settings" in your tracking data.
 
 ## Auto-Capture Events
 

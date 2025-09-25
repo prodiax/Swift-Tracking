@@ -43,6 +43,7 @@ struct ComprehensiveExampleApp: App {
 struct ContentView: View {
     @State private var text = ""
     @State private var showingDetail = false
+    @State private var showingNavigationDemo = false
     @State private var scale: CGFloat = 1.0
     @State private var rotation: Double = 0.0
     
@@ -361,6 +362,11 @@ struct ContentView: View {
                         }
                         .trackButtonTap("Show Auto-Tracked View", data: ["section": "navigation_tracking"])
                         
+                        Button("Show Navigation Title Demo") {
+                            showingNavigationDemo = true
+                        }
+                        .trackButtonTap("Show Navigation Title Demo", data: ["section": "navigation_tracking"])
+                        
                         Text("Current page title will be: 'SwiftTracking Demo'")
                             .font(.caption)
                             .foregroundColor(.blue)
@@ -402,6 +408,9 @@ struct ContentView: View {
         }
         .sheet(isPresented: $showingDetail) {
             DetailView()
+        }
+        .sheet(isPresented: $showingNavigationDemo) {
+            NavigationTitleDemoView()
         }
     }
 }
@@ -463,5 +472,62 @@ extension View {
                     action(value)
                 }
         )
+    }
+}
+
+struct NavigationTitleDemoView: View {
+    @Environment(\.dismiss) private var dismiss
+    @State private var currentTitle = "Home"
+    
+    var body: some View {
+        NavigationView {
+            VStack(spacing: 20) {
+                Text("Navigation Title Tracking Demo")
+                    .font(.title2)
+                    .fontWeight(.bold)
+                    .padding()
+                
+                Text("This demo shows how navigation titles are automatically tracked. The page_title in events will reflect the current navigation title.")
+                    .font(.body)
+                    .multilineTextAlignment(.center)
+                    .padding()
+                
+                VStack(spacing: 15) {
+                    Text("Current Navigation Title: \(currentTitle)")
+                        .font(.headline)
+                        .foregroundColor(.blue)
+                    
+                    Button("Change to 'Profile'") {
+                        currentTitle = "Profile"
+                        Tracker.shared.updateNavigationTitle("Profile", data: ["demo": "navigation_title_change"])
+                    }
+                    .trackButtonTap("Change to Profile", data: ["demo": "navigation_title_change"])
+                    
+                    Button("Change to 'Settings'") {
+                        currentTitle = "Settings"
+                        Tracker.shared.updateNavigationTitle("Settings", data: ["demo": "navigation_title_change"])
+                    }
+                    .trackButtonTap("Change to Settings", data: ["demo": "navigation_title_change"])
+                    
+                    Button("Change to 'Dashboard'") {
+                        currentTitle = "Dashboard"
+                        Tracker.shared.updateNavigationTitle("Dashboard", data: ["demo": "navigation_title_change"])
+                    }
+                    .trackButtonTap("Change to Dashboard", data: ["demo": "navigation_title_change"])
+                }
+                .padding()
+                
+                Spacer()
+                
+                Button("Close Demo") {
+                    dismiss()
+                }
+                .trackButtonTap("Close Demo", data: ["demo": "navigation_title_demo"])
+                .padding()
+            }
+            .navigationTitle(currentTitle)
+            .navigationBarTitleDisplayMode(.inline)
+            .trackNavigationTitle(currentTitle, data: ["demo": "navigation_title_demo"])
+        }
     }
 }

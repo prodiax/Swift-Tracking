@@ -4,6 +4,10 @@ import Foundation
 import UIKit
 import ObjectiveC.runtime
 
+#if canImport(SwiftUI)
+import SwiftUI
+#endif
+
 /// Manager responsible for enabling UIKit-level auto capture via method swizzling
 final class AutoCaptureManager {
     static let shared = AutoCaptureManager()
@@ -30,7 +34,11 @@ final class AutoCaptureManager {
             return // Don't track system UI screens
         }
         
-        let screenName = Self.extractSwiftUIViewNameIfHostingController(from: rawName)
+        // Try to extract navigation title from the navigation context
+        let navigationTitle = Self.extractNavigationTitle(from: viewController)
+        
+        let screenName = navigationTitle
+            ?? Self.extractSwiftUIViewNameIfHostingController(from: rawName)
             ?? viewController.title
             ?? rawName
 
@@ -39,7 +47,11 @@ final class AutoCaptureManager {
             return // Skip generic or system names
         }
 
+        // Set both screen name and navigation title
         Tracker.shared.setCurrentScreenName(screenName)
+        if let navTitle = navigationTitle {
+            Tracker.shared.setCurrentNavigationTitle(navTitle)
+        }
         Tracker.shared.trackScreenView(screenName)
     }
 
@@ -99,6 +111,47 @@ final class AutoCaptureManager {
         return names.isEmpty ? nil : names
     }
 
+    /// Extract navigation title from the view controller's navigation context
+    private static func extractNavigationTitle(from viewController: UIViewController) -> String? {
+        // First, try to get the title from the view controller itself
+        if let title = viewController.title, !title.isEmpty && isMeaningfulScreenName(title) {
+            return title
+        }
+        
+        // Try to get title from navigation item
+        if let navItem = viewController.navigationItem,
+           let title = navItem.title, !title.isEmpty && isMeaningfulScreenName(title) {
+            return title
+        }
+        
+        // For SwiftUI hosting controllers, try to extract from the navigation context
+        #if canImport(SwiftUI)
+        if let hostingController = viewController as? UIHostingController<AnyView> {
+            return extractSwiftUINavigationTitle(from: hostingController)
+        }
+        #endif
+        
+        // Try to get title from parent navigation controller's top view controller
+        if let navController = viewController.navigationController,
+           let topVC = navController.topViewController,
+           topVC == viewController,
+           let title = topVC.title, !title.isEmpty && isMeaningfulScreenName(title) {
+            return title
+        }
+        
+        return nil
+    }
+    
+    /// Extract navigation title from SwiftUI hosting controller
+    #if canImport(SwiftUI)
+    private static func extractSwiftUINavigationTitle(from hostingController: UIHostingController<AnyView>) -> String? {
+        // This is a more advanced approach that would require runtime inspection
+        // For now, we'll rely on the view controller's title property
+        // which should be set by SwiftUI's navigationTitle modifier
+        return hostingController.title
+    }
+    #endif
+    
     /// If the view controller is a UIHostingController<Content>, extract "Content"
     private static func extractSwiftUIViewNameIfHostingController(from vcTypeName: String) -> String? {
         // Matches patterns like "UIHostingController<ContentView>" or "UIHostingController<NavigationStack<ContentView>>"

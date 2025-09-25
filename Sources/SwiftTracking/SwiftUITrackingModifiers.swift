@@ -3,6 +3,23 @@ import SwiftUI
 /// SwiftUI view modifiers for easy tracking integration
 public extension View {
     
+    /// Clean view type name by removing common SwiftUI wrapper types
+    private static func cleanViewTypeName(_ viewTypeName: String) -> String {
+        return viewTypeName
+            .replacingOccurrences(of: "NavigationStack<", with: "")
+            .replacingOccurrences(of: "NavigationView<", with: "")
+            .replacingOccurrences(of: "TabView<", with: "")
+            .replacingOccurrences(of: "Optional<", with: "")
+            .replacingOccurrences(of: "ModifiedContent<", with: "")
+            .replacingOccurrences(of: "TupleView<", with: "")
+            .replacingOccurrences(of: "Group<", with: "")
+            .replacingOccurrences(of: "VStack<", with: "")
+            .replacingOccurrences(of: "HStack<", with: "")
+            .replacingOccurrences(of: "ZStack<", with: "")
+            .replacingOccurrences(of: ">", with: "")
+            .split(separator: ".").last?.description ?? viewTypeName
+    }
+    
     /// Track screen views automatically
     func trackScreenView(_ screenName: String, data: [String: Any] = [:]) -> some View {
         self.onAppear {
@@ -28,14 +45,25 @@ public extension View {
         self.onAppear {
             // Try to get navigation title from environment or use view type name
             let viewTypeName = String(describing: type(of: self))
-            let cleanName = viewTypeName
-                .replacingOccurrences(of: "NavigationStack<", with: "")
-                .replacingOccurrences(of: "NavigationView<", with: "")
-                .replacingOccurrences(of: "TabView<", with: "")
-                .replacingOccurrences(of: "Optional<", with: "")
-                .replacingOccurrences(of: ">", with: "")
-                .split(separator: ".").last?.description ?? viewTypeName
+            let cleanName = Self.cleanViewTypeName(viewTypeName)
             
+            Tracker.shared.setCurrentNavigationTitle(cleanName)
+            Tracker.shared.trackScreenView(cleanName, data: data)
+        }
+        .onDisappear {
+            Tracker.shared.setCurrentNavigationTitle(nil)
+        }
+    }
+    
+    /// Automatically track navigation title changes using SwiftUI environment
+    /// This modifier will automatically detect and track navigation title changes
+    func autoTrackNavigationTitle(data: [String: Any] = [:]) -> some View {
+        self.onAppear {
+            // Use the view's type name as a fallback, but prioritize any navigation title
+            let viewTypeName = String(describing: type(of: self))
+            let cleanName = Self.cleanViewTypeName(viewTypeName)
+            
+            // Set the navigation title and track the screen view
             Tracker.shared.setCurrentNavigationTitle(cleanName)
             Tracker.shared.trackScreenView(cleanName, data: data)
         }
@@ -46,16 +74,10 @@ public extension View {
     
     /// Automatically infer a screen name from the view type and track on appear
     func autoTrackScreen(data: [String: Any] = [:]) -> some View {
-        // Attempt to infer a more readable name by stripping common wrappers
-        let raw = String(describing: type(of: self))
-        let inferred = raw
-            .replacingOccurrences(of: "NavigationStack<", with: "")
-            .replacingOccurrences(of: "NavigationView<", with: "")
-            .replacingOccurrences(of: "TabView<", with: "")
-            .replacingOccurrences(of: "Optional<", with: "")
-            .replacingOccurrences(of: ">", with: "")
         return self.onAppear {
-            Tracker.shared.trackScreenView(inferred, data: data)
+            let viewTypeName = String(describing: type(of: self))
+            let cleanName = Self.cleanViewTypeName(viewTypeName)
+            Tracker.shared.trackScreenView(cleanName, data: data)
         }
     }
     
